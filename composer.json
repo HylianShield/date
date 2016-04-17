@@ -1,0 +1,23 @@
+{
+  "name": "hylianshield/date",
+  "description": "HylianShield date business logic abstraction",
+  "minimum-stability": "dev",
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "Jan-Marten de Boer",
+      "email": "johmanx@hylianshield.org"
+    }
+  ],
+  "require": {
+    "php": "~5.5 || ~7"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "5.3.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "HylianShield\\Date\\": "src"
+    }
+  }
+}
