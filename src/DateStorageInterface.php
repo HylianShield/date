@@ -19,6 +19,8 @@ interface DateStorageInterface extends \Iterator, \ArrayAccess
      *
      * @param DateTimeInterface $object
      * @return string
+     * @throws \InvalidArgumentException when $object is not an instance of
+     *   DateTimeInterface.
      */
-    public function getHash(DateTimeInterface $object);
+    public function getHash($object);
 }

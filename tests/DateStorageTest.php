@@ -99,6 +99,18 @@ class DateStorageTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * Test that the getHash method throws when an ilegal object is supplied.
+     *
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage Invalid object supplied. Must be instance of
+     */
+    public function testInvalidHashingObject()
+    {
+        $storage = new DateStorage('Y-m-d', $this->createDateTimeZone());
+        $storage->getHash(false);
+    }
+
+    /**
      * @return DateTimeZone[][]
      */
     public function mismatchingDateTimeZoneProvider()

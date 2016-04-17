@@ -57,8 +57,17 @@ final class DateStorage extends \SplObjectStorage implements DateStorageInterfac
      * @throws \DomainException when $object is not a date in the time zone
      *   as specified in the constructor of the storage.
      */
-    public function getHash(DateTimeInterface $object)
+    public function getHash($object)
     {
+        if (!($object instanceof DateTimeInterface)) {
+            throw new \InvalidArgumentException(
+                sprintf(
+                    'Invalid object supplied. Must be instance of %s',
+                    DateTimeInterface::class
+                )
+            );
+        }
+        
         if ($object->getTimezone()->getName() !== $this->timeZone->getName()) {
             throw new \DomainException(
                 sprintf(
