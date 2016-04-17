@@ -2,6 +2,8 @@
 
 The business logic abstraction layer for your date sensitive application.
 
+[![Build Status](https://travis-ci.org/HylianShield/date.svg?branch=master)](https://travis-ci.org/HylianShield/date)
+
 ## Date Container
 
 The date container is an easy to understand container that can store data alongside full-fledged instances of `DateTimeInterface`.
