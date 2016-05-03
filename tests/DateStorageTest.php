@@ -1,7 +1,6 @@
 <?php
 /**
- * Copyright MediaCT. All rights reserved.
- * https://www.mediact.nl
+ * HylianShield Date Storage.
  */
 
 namespace HylianShield\Test\Date;
