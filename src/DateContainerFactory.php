@@ -33,9 +33,10 @@ class DateContainerFactory implements DateContainerFactoryInterface
      * Create a date container for the supplied format.
      *
      * @param string $format
+     *
      * @return DateContainerInterface
      */
-    public function createFromFormat($format)
+    public function createFromFormat(string $format): DateContainerInterface
     {
         return new DateContainer(
             new DateStorage($format, $this->timeZone)
@@ -47,7 +48,7 @@ class DateContainerFactory implements DateContainerFactoryInterface
      *
      * @return DateContainerInterface
      */
-    public function createIntervalSecond()
+    public function createIntervalSecond(): DateContainerInterface
     {
         return $this->createFromFormat('Y-m-d H:i:s');
     }
@@ -57,7 +58,7 @@ class DateContainerFactory implements DateContainerFactoryInterface
      *
      * @return DateContainerInterface
      */
-    public function createIntervalMinute()
+    public function createIntervalMinute(): DateContainerInterface
     {
         return $this->createFromFormat('Y-m-d H:i');
     }
@@ -67,7 +68,7 @@ class DateContainerFactory implements DateContainerFactoryInterface
      *
      * @return DateContainerInterface
      */
-    public function createIntervalHour()
+    public function createIntervalHour(): DateContainerInterface
     {
         return $this->createFromFormat('Y-m-d H');
     }
@@ -77,7 +78,7 @@ class DateContainerFactory implements DateContainerFactoryInterface
      *
      * @return DateContainerInterface
      */
-    public function createIntervalDay()
+    public function createIntervalDay(): DateContainerInterface
     {
         return $this->createFromFormat('Y-m-d');
     }

@@ -1,28 +1,17 @@
 <?php
-/**
- * HylianShield Date Storage.
- */
-
 namespace HylianShield\Date;
 
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 
-/**
- * Container for data storage along date instances.
- *
- * @package HylianShield\Date
- */
 class DateContainer implements DateContainerInterface
 {
-    /**
-     * @var DateStorageInterface
-     */
+    /** @var DateStorageInterface */
     private $storage;
 
     /**
-     * DateContainer constructor.
+     * Constructor.
      *
      * @param DateStorageInterface $storage
      */
@@ -32,21 +21,12 @@ class DateContainer implements DateContainerInterface
     }
 
     /**
-     * Storage getter.
-     *
-     * @return DateStorageInterface
-     */
-    final protected function getStorage()
-    {
-        return $this->storage;
-    }
-
-    /**
      * Attach the given data along the given date.
      *
      * @param DateTimeInterface $date
-     * @param mixed $data
-     * @return $this
+     * @param mixed             $data
+     *
+     * @return void
      */
     public function attach(DateTimeInterface $date, $data)
     {
@@ -55,45 +35,44 @@ class DateContainer implements DateContainerInterface
             $date = DateTimeImmutable::createFromMutable($date);
         }
 
-        $this->getStorage()->offsetSet($date, $data);
-
-        return $this;
+        $this->storage->offsetSet($date, $data);
     }
 
     /**
      * Detach the data corresponding to the given date.
      *
      * @param DateTimeInterface $date
-     * @return $this
+     *
+     * @return void
      */
     public function detach(DateTimeInterface $date)
     {
-        $this->getStorage()->offsetUnset($date);
-
-        return $this;
+        $this->storage->offsetUnset($date);
     }
 
     /**
      * Check if the container contains data for the given date.
      *
      * @param DateTimeInterface $date
+     *
      * @return bool
      */
-    public function contains(DateTimeInterface $date)
+    public function contains(DateTimeInterface $date): bool
     {
-        return $this->getStorage()->offsetExists($date);
+        return $this->storage->offsetExists($date);
     }
 
     /**
      * Get the data for the given date.
      *
      * @param DateTimeInterface $date
-     * @return mixed|null
+     *
+     * @return mixed
      */
     public function getData(DateTimeInterface $date)
     {
         return ($this->contains($date)
-            ? $this->getStorage()->offsetGet($date)
+            ? $this->storage->offsetGet($date)
             : null
         );
     }
@@ -115,17 +94,17 @@ class DateContainer implements DateContainerInterface
      */
     public function next()
     {
-        $this->getStorage()->next();
+        $this->storage->next();
     }
 
     /**
      * Return the date for the current data.
      *
-     * @return null|DateTimeInterface
+     * @return DateTimeInterface
      */
-    public function key()
+    public function key(): DateTimeInterface
     {
-        return $this->getStorage()->current();
+        return $this->storage->current();
     }
 
     /**
@@ -133,9 +112,9 @@ class DateContainer implements DateContainerInterface
      *
      * @return bool
      */
-    public function valid()
+    public function valid(): bool
     {
-        return $this->getStorage()->valid();
+        return $this->storage->valid();
     }
 
     /**
@@ -145,34 +124,19 @@ class DateContainer implements DateContainerInterface
      */
     public function rewind()
     {
-        $this->getStorage()->rewind();
+        $this->storage->rewind();
     }
 
     /**
      * Get the unique identifier for the given date.
      *
      * @param DateTimeInterface $date
+     *
      * @return string
      */
-    public function getIdentifier(DateTimeInterface $date)
+    public function getIdentifier(DateTimeInterface $date): string
     {
-        return $this->getStorage()->getHash($date);
-    }
-
-    /**
-     * Get all unique date identifiers.
-     *
-     * @return string[]
-     */
-    public function getIdentifiers()
-    {
-        $identifiers = [];
-
-        foreach ($this->getStorage() as $date) {
-            $identifiers[] = $this->getIdentifier($date);
-        }
-
-        return $identifiers;
+        return $this->storage->getHash($date);
     }
 
     /**
@@ -180,11 +144,10 @@ class DateContainer implements DateContainerInterface
      *
      * @return mixed[]
      */
-    public function toArray()
+    public function toArray(): array
     {
         $storage = [];
 
-        /** @var DateTimeInterface $date */
         foreach ($this as $date => $data) {
             $storage[$this->getIdentifier($date)] = $data;
         }

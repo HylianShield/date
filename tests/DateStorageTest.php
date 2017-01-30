@@ -1,149 +1,68 @@
 <?php
-/**
- * HylianShield Date Storage.
- */
+namespace HylianShield\Date\Tests;
 
-namespace HylianShield\Test\Date;
-
-use DateTime;
-use DateTimeZone;
 use HylianShield\Date\DateStorage;
+use stdClass;
 
-class DateStorageTest extends \PHPUnit_Framework_TestCase
+/**
+ * @coversDefaultClass \HylianShield\Date\DateStorage
+ */
+class DateStorageTest extends AbstractDateTimeTestCase
 {
     /**
-     * @return DateTimeZone
+     * @return DateStorage
+     * @covers ::__construct
      */
-    protected function createDateTimeZone()
+    public function testConstructor(): DateStorage
     {
-        $identifiers = DateTimeZone::listIdentifiers(DateTimeZone::UTC);
-        return new DateTimeZone(current($identifiers));
-    }
-
-    /**
-     * @return mixed[][]
-     */
-    public function illegalConstructorArgumentsProvider()
-    {
-        $dateTimeZone = $this->createDateTimeZone();
-
-        return array_map(
-            function ($illegalFormat) use ($dateTimeZone) {
-                return [$illegalFormat, $dateTimeZone];
-            },
-            [
-                12,
-                .12,
-                true,
-                false,
-                [],
-                new \stdClass()
-            ]
+        return new DateStorage(
+            static::FORMAT,
+            $this->createTimeZone()
         );
     }
 
     /**
-     * Test that the constructor throws when an illegal date format is supplied.
+     * @depends testConstructor
      *
-     * @param mixed $format
-     * @param DateTimeZone $dateTimeZone
-     * @dataProvider illegalConstructorArgumentsProvider
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid date format supplied
-     */
-    public function testIllegalConstructorFormat(
-        $format,
-        DateTimeZone $dateTimeZone
-    ) {
-        new DateStorage($format, $dateTimeZone);
-    }
-
-    /**
-     * @return mixed[][]
-     */
-    public function formatAndTimeZoneProvider()
-    {
-        $dateTimeZone = $this->createDateTimeZone();
-
-        return array_map(
-            function ($format) use ($dateTimeZone) {
-                return [$format, $dateTimeZone];
-            },
-            // @see http://php.net/manual/en/datetime.formats.php
-            [
-                'foo',
-                'Y-m-d',
-                'Y-m-d H:i:s',
-                'r',
-                'c'
-            ]
-        );
-    }
-
-    /**
-     * Test the hashing function against the given format and date time zone.
+     * @param DateStorage $storage
      *
-     * @param string $format
-     * @param DateTimeZone $dateTimeZone
-     * @dataProvider formatAndTimeZoneProvider
-     */
-    public function testHash($format, DateTimeZone $dateTimeZone)
-    {
-        $storage = new DateStorage($format, $dateTimeZone);
-        $dateTime = new DateTime('2000-01-01 13:37:42', $dateTimeZone);
-        $this->assertEquals(
-            $dateTime->format($format),
-            $storage->getHash($dateTime)
-        );
-    }
-
-    /**
-     * Test that the getHash method throws when an ilegal object is supplied.
+     * @return void
+     * @covers ::getHash
      *
      * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Invalid object supplied. Must be instance of
      */
-    public function testInvalidHashingObject()
+    public function testGetHashForIllegalArgument(DateStorage $storage)
     {
-        $storage = new DateStorage('Y-m-d', $this->createDateTimeZone());
-        $storage->getHash(false);
+        /** @noinspection PhpParamsInspection */
+        $storage->getHash(new stdClass());
     }
 
     /**
-     * @return DateTimeZone[][]
-     */
-    public function mismatchingDateTimeZoneProvider()
-    {
-        $identifiers = DateTimeZone::listIdentifiers();
-        $calls = [];
-
-        while (count($identifiers) > 1) {
-            $calls[] = [
-                new DateTimeZone(array_shift($identifiers)),
-                new DateTimeZone(array_shift($identifiers))
-            ];
-        }
-
-        return $calls;
-    }
-
-    /**
-     * Test that the storage throws when date time instances, that use a
-     * differing time zone to the storage, are supplied, the storage throws.
+     * @return void
+     * @covers ::getHash
      *
-     * @param DateTimeZone $originalDateTimeZone
-     * @param DateTimeZone $mismatchDateTimeZone
-     * @dataProvider mismatchingDateTimeZoneProvider
-     * @expectedException \DomainException
-     * @expectedExceptionMessage Date storage expects date in time zone
-     * @covers \HylianShield\Date\DateStorage::getHash
+     * @expectedException \HylianShield\Date\IllegalDateTimeZoneException
      */
-    public function testMismatchingDateTimeZones(
-        DateTimeZone $originalDateTimeZone,
-        DateTimeZone $mismatchDateTimeZone
-    ) {
-        $storage = new DateStorage('', $originalDateTimeZone);
-        $dateTime = new DateTime('now', $mismatchDateTimeZone);
-        $storage->getHash($dateTime);
+    public function testGetHashForMismatchingTimezone()
+    {
+        $expected = $this->createTimeZone(static::EXPECTED_TIMEZONE);
+        $supplied = $this->createTimeZone(static::SUPPLIED_TIMEZONE);
+        $storage  = new DateStorage(static::FORMAT, $expected);
+        $date     = $this->createDateTime($supplied);
+
+        $storage->getHash($date);
+    }
+
+    /**
+     * @return string
+     * @covers ::getHash
+     */
+    public function testGetHash(): string
+    {
+        $timeZone = $this->createTimeZone(static::EXPECTED_TIMEZONE);
+        $storage  = new DateStorage(static::FORMAT, $timeZone);
+        $date     = $this->createDateTime($timeZone, 42);
+
+        return $storage->getHash($date);
     }
 }

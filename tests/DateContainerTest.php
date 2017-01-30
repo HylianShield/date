@@ -1,387 +1,219 @@
 <?php
 /**
- * HylianShield Date Storage.
+ * Copyright MediaCT. All rights reserved.
+ * https://www.mediact.nl
  */
 
-namespace HylianShield\Test\Date;
+namespace HylianShield\Date\Tests;
 
 use DateTime;
-use DateTimeImmutable;
 use DateTimeInterface;
 use HylianShield\Date\DateContainer;
 use HylianShield\Date\DateStorageInterface;
 
-class DateContainerTest extends \PHPUnit_Framework_TestCase
+/**
+ * @coversDefaultClass \HylianShield\Date\DateContainer
+ */
+class DateContainerTest extends AbstractDateTimeTestCase
 {
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject|DateStorageInterface
+     * @return DateContainer
+     * @covers ::__construct
      */
-    protected function createStorageMock()
+    public function testConstructor(): DateContainer
     {
-        return $this->getMock(DateStorageInterface::class);
-    }
-
-    /**
-     * Test the constructor.
-     */
-    public function testConstructor()
-    {
-        $this->assertInstanceOf(
-            DateContainer::class,
-            new DateContainer($this->createStorageMock())
+        return new DateContainer(
+            $this->createMock(DateStorageInterface::class)
         );
     }
 
     /**
-     * @return mixed[][]
-     */
-    public function attachProvider()
-    {
-        $calls = [];
-
-        $mutableDate = new DateTime('1234-01-01 12:34:56');
-        $immutableDate = DateTimeImmutable::createFromMutable($mutableDate);
-
-        $entries = [
-            'Foo',
-            1337,
-            .12,
-            [],
-            new \stdClass()
-        ];
-
-        foreach ($entries as $entry) {
-            $calls[] = [$mutableDate, $entry];
-            $calls[] = [$immutableDate, $entry];
-        }
-
-        return $calls;
-    }
-
-    /**
-     * Test the attach method.
+     * @depends testConstructor
      *
-     * @param DateTimeInterface $dateTime
-     * @param mixed $data
-     * @dataProvider attachProvider
+     * @param DateContainer $container
+     *
+     * @return string
+     * @covers ::getIdentifier
      */
-    public function testAttach(DateTimeInterface $dateTime, $data = null)
+    public function testGetIdentifier(DateContainer $container): string
     {
-        $storage = $this->createStorageMock();
-        $container = new DateContainer($storage);
-
-        $storage
-            ->expects($this->once())
-            ->method('offsetSet')
-            ->with(
-                $this->isInstanceOf(DateTimeImmutable::class),
-                $data
-            );
-
-        $this->assertInstanceOf(
-            DateContainer::class,
-            $container->attach($dateTime, $data)
+        return $container->getIdentifier(
+            $this->createDateTime(null, 42)
         );
     }
 
     /**
-     * Test the detach method.
+     * @return DateContainer
+     * @covers ::attach
      */
-    public function testDetach()
+    public function testAttach(): DateContainer
     {
-        $dateTime = new DateTime();
-        $storage = $this->createStorageMock();
+        $storage   = $this->createMock(DateStorageInterface::class);
         $container = new DateContainer($storage);
+        $timeZone = $this->createTimeZone();
+
+        $foo = $this->createDateTime($timeZone, strtotime('1970-01-01'));
+        $bar = $this->createDateTime($timeZone, strtotime('1970-01-02'));
+        $baz = new DateTime('1970-01-03', $timeZone);
+
+        $container->attach($foo, 'Foo');
+        $container->attach($bar, 'Bar');
+        $container->attach($baz, 'Baz');
 
         $storage
-            ->expects($this->once())
-            ->method('offsetUnset')
-            ->with($dateTime);
-
-        $this->assertInstanceOf(
-            DateContainer::class,
-            $container->detach($dateTime)
-        );
-    }
-
-    /**
-     * Test the container against a storage that does contain a supplied date.
-     */
-    public function testDoesContain()
-    {
-        $storage = $this->createStorageMock();
-        $dateTime = new DateTime();
-
-        $storage
-            ->expects($this->once())
-            ->method('offsetExists')
-            ->with($dateTime)
-            ->willReturn(true);
-
-        $container = new DateContainer($storage);
-
-        $this->assertTrue($container->contains($dateTime));
-    }
-
-    /**
-     * Test the container against a storage that does not contain a supplied
-     * date.
-     */
-    public function testDoesNotContain()
-    {
-        $storage = $this->createStorageMock();
-        $dateTime = new DateTime();
-
-        $storage
-            ->expects($this->once())
-            ->method('offsetExists')
-            ->with($dateTime)
-            ->willReturn(false);
-
-        $container = new DateContainer($storage);
-
-        $this->assertFalse($container->contains($dateTime));
-    }
-
-    /**
-     * Test getting existing data out of the container.
-     */
-    public function testGetExistingData()
-    {
-        $storage = $this->createStorageMock();
-        $dateTime = new DateTime();
-        $data = ['foo' => 'bar'];
-
-        $storage
-            ->expects($this->once())
-            ->method('offsetExists')
-            ->with($dateTime)
-            ->willReturn(true);
-
-        $storage
-            ->expects($this->once())
-            ->method('offsetGet')
-            ->with($dateTime)
-            ->willReturn($data);
-
-        $container = new DateContainer($storage);
-
-        $this->assertSame(
-            $data,
-            $container->getData($dateTime)
-        );
-    }
-
-    /**
-     * Test getting non-existing data out of the container.
-     */
-    public function testGetNonExistingData()
-    {
-        $storage = $this->createStorageMock();
-        $dateTime = new DateTime();
-
-        $storage
-            ->expects($this->once())
-            ->method('offsetExists')
-            ->with($dateTime)
-            ->willReturn(false);
-
-        $storage
-            ->expects($this->never())
-            ->method('offsetGet');
-
-        $container = new DateContainer($storage);
-
-        $this->assertNull(
-            $container->getData($dateTime)
-        );
-    }
-
-    /**
-     * Test getting the identifier.
-     */
-    public function testGetIdentifier()
-    {
-        $dateTime = new DateTime();
-        $identifier = $dateTime->format('Y-m-d');
-
-        $storage = $this->createStorageMock();
-        $storage
-            ->expects($this->once())
+            ->expects($this->any())
             ->method('getHash')
-            ->with($dateTime)
-            ->willReturn($identifier);
-
-        $container = new DateContainer($storage);
-
-        $this->assertEquals($identifier, $container->getIdentifier($dateTime));
-    }
-
-    /**
-     * Create a storage holding the given data points, all having the same
-     * given data.
-     *
-     * @param DateTimeInterface[] $dataPoints
-     * @param mixed $data
-     * @return DateStorageInterface|\PHPUnit_Framework_MockObject_MockObject
-     */
-    protected function createIterableStorageMock(array $dataPoints, $data)
-    {
-        $storage = $this->createStorageMock();
-
-        $validReturns = array_map('boolval', $dataPoints);
-        $validReturns[] = false;
-
-        $currentReturns = [];
-
-        foreach ($dataPoints as $dataPoint) {
-            if ($dataPoint instanceof DateTime) {
-                $dataPoint = DateTimeImmutable::createFromMutable($dataPoint);
-            }
-
-            $currentReturns[] = $dataPoint;
-            $currentReturns[] = $dataPoint;
-        }
-
-        $storage
-            ->expects($this->exactly(count($currentReturns)))
-            ->method('current')
-            ->willReturnOnConsecutiveCalls(...$currentReturns);
-
-        $storage
-            ->expects($this->exactly(count($validReturns)))
-            ->method('valid')
-            ->willReturnOnConsecutiveCalls(...$validReturns);
-
-        $storage
-            ->expects($this->exactly(count($dataPoints)))
-            ->method('next');
-
-        $storage
-            ->expects($this->exactly(count($dataPoints)))
-            ->method('offsetExists')
-            ->willReturn(true);
-
-        $storage
-            ->expects($this->exactly(count($dataPoints)))
-            ->method('offsetGet')
-            ->willReturn($data);
-
-        return $storage;
-    }
-
-    /**
-     * Test iterating over a date container.
-     */
-    public function testIteration()
-    {
-        $dataValue = 'foo';
-        $dataPoints = [
-            new DateTime('today'),
-            new DateTime('tomorrow')
-        ];
-
-        $storage = $this->createIterableStorageMock($dataPoints, $dataValue);
-
-        $container = new DateContainer($storage);
-        $numIterations = 0;
-
-        foreach ($container as $date => $data) {
-            $this->assertEquals($dataValue, $data);
-            $this->assertInstanceOf(DateTimeImmutable::class, $date);
-
-            ++$numIterations;
-        }
-
-        $this->assertEquals(count($dataPoints), $numIterations);
-    }
-
-    /**
-     * Test the toArray functionality.
-     *
-     * @covers \HylianShield\Date\DateContainer::toArray
-     */
-    public function testToArray()
-    {
-        $dataValue = 'foo';
-        /** @var DateTimeInterface[] $dataPoints */
-        $dataPoints = [
-            new DateTime('today'),
-            new DateTime('tomorrow')
-        ];
-        $format = 'Y-m-d';
-
-        $storage = $this->createIterableStorageMock($dataPoints, $dataValue);
-        $container = new DateContainer($storage);
-
-        $storage
-            ->expects($this->exactly(count($dataPoints)))
-            ->method('getHash')
-            ->with($this->isInstanceOf(DateTimeImmutable::class))
+            ->with($this->isInstanceOf(DateTimeInterface::class))
             ->willReturnCallback(
-                function (DateTimeInterface $dateTime) use ($format) {
-                    return $dateTime->format($format);
+                function (DateTimeInterface $dateTime) : string {
+                    return $dateTime->format(static::FORMAT);
                 }
             );
 
-        $dataSet = $container->toArray();
+        $storage
+            ->expects($this->any())
+            ->method('offsetExists')
+            ->with($this->isInstanceOf(DateTimeInterface::class))
+            ->willReturnCallback(
+                function (DateTimeInterface $dateTime) : bool {
+                    return in_array(
+                        $dateTime->format('d'),
+                        ['01', '02'],
+                        true
+                    );
+                }
+            );
 
-        $this->assertInternalType('array', $dataSet);
-        $this->assertCount(count($dataPoints), $dataSet);
+        $storage
+            ->expects($this->any())
+            ->method('offsetGet')
+            ->with($this->isInstanceOf(DateTimeInterface::class))
+            ->willReturnCallback(
+                function (DateTimeInterface $dateTime) {
+                    static $values = [
+                        '01' => 'Foo',
+                        '02' => 'Bar'
+                    ];
 
-        foreach ($dataPoints as $date) {
-            $this->assertArrayHasKey($date->format($format), $dataSet);
-        }
+                    $day = $dateTime->format('d');
 
-        foreach ($dataSet as $data) {
-            $this->assertEquals($dataValue, $data);
-        }
+                    return array_key_exists($day, $values)
+                        ? $values[$day]
+                        : null;
+                }
+            );
+
+        $storage
+            ->expects($this->any())
+            ->method('current')
+            ->willReturnOnConsecutiveCalls(
+                // First iteration.
+                $foo,
+                $bar,
+
+                // Second iteration.
+                $foo,
+                $bar
+            );
+
+        $storage
+            ->expects($this->any())
+            ->method('valid')
+            ->willReturn(
+                // First iteration.
+                true,
+                true,
+                false,
+
+                // Second iteration.
+                true,
+                true,
+                false
+            );
+
+        return $container;
     }
 
     /**
-     * Test getting the identifiers for the stored dates.
+     * @depends clone testAttach
      *
-     * @covers \HylianShield\Date\DateContainer::getIdentifiers
+     * @param DateContainer $container
+     *
+     * @return DateContainer
+     * @covers ::detach
      */
-    public function testGetIdentifiers()
+    public function testDetach(DateContainer $container): DateContainer
     {
-        /** @var DateTimeInterface[] $dataPoints */
-        $dataPoints = [
-            new DateTimeImmutable('today'),
-            new DateTimeImmutable('tomorrow')
-        ];
-        $format = 'Y-m-d';
-        $validReturns = array_map('boolval', $dataPoints);
-        $validReturns[] = false;
-
-        $formatter = function (DateTimeInterface $dateTime) use ($format) {
-            return $dateTime->format($format);
-        };
-
-        $storage = $this->createStorageMock();
-
-        $storage
-            ->expects($this->exactly(count($dataPoints)))
-            ->method('current')
-            ->willReturnOnConsecutiveCalls(...$dataPoints);
-
-        $storage
-            ->expects($this->exactly(count($validReturns)))
-            ->method('valid')
-            ->willReturnOnConsecutiveCalls(...$validReturns);
-
-        $storage
-            ->expects($this->exactly(count($dataPoints)))
-            ->method('getHash')
-            ->with($this->isInstanceOf(DateTimeImmutable::class))
-            ->willReturnCallback($formatter);
-
-        $container = new DateContainer($storage);
-        $identifiers = $container->getIdentifiers();
-
-        $this->assertSame(
-            array_map($formatter, $dataPoints),
-            $identifiers
+        $container->detach(
+            $this->createDateTime(null, strtotime('1970-01-03'))
         );
+
+        $this->assertCount(2, $container);
+
+        return $container;
+    }
+
+    /**
+     * @depends clone testAttach
+     *
+     * @param DateContainer $container
+     *
+     * @return bool
+     * @covers ::contains
+     */
+    public function testContains(DateContainer $container): bool
+    {
+        return $container->contains(
+            $this->createDateTime(null, strtotime('1970-01-01'))
+        );
+    }
+
+    /**
+     * @depends clone testAttach
+     *
+     * @param DateContainer $container
+     *
+     * @return void
+     * @covers ::getData
+     */
+    public function testGetData(DateContainer $container)
+    {
+        $this->assertEquals(
+            'Foo',
+            $container->getData(
+                $this->createDateTime(null, strtotime('1970-01-01'))
+            )
+        );
+
+        $this->assertEquals(
+            'Bar',
+            $container->getData(
+                $this->createDateTime(null, strtotime('1970-01-02'))
+            )
+        );
+
+        $this->assertNull(
+            $container->getData(
+                $this->createDateTime(null, strtotime('1970-01-03'))
+            )
+        );
+    }
+
+    /**
+     * @depends clone testAttach
+     *
+     * @param DateContainer $container
+     *
+     * @return array
+     * @covers ::toArray
+     * @covers ::rewind
+     * @covers ::valid
+     * @covers ::current
+     * @covers ::next
+     * @covers ::key
+     */
+    public function testToArray(DateContainer $container): array
+    {
+        return $container->toArray();
     }
 }

@@ -1,19 +1,12 @@
 <?php
-/**
- * HylianShield Date Storage.
- */
-
 namespace HylianShield\Date;
 
 use DateTimeInterface;
 use DateTimeZone;
+use InvalidArgumentException;
+use SplObjectStorage;
 
-/**
- * A storage container for date related data.
- *
- * @package HylianShield\Date
- */
-final class DateStorage extends \SplObjectStorage implements DateStorageInterface
+final class DateStorage extends SplObjectStorage implements DateStorageInterface
 {
     /**
      * The date format that makes dates uniquely identifiable.
@@ -31,20 +24,14 @@ final class DateStorage extends \SplObjectStorage implements DateStorageInterfac
     private $timeZone;
 
     /**
-     * DateStorage constructor.
+     * Constructor.
      *
-     * @param string $format
+     * @param string       $format
      * @param DateTimeZone $timeZone
      */
-    public function __construct($format, DateTimeZone $timeZone)
+    public function __construct(string $format, DateTimeZone $timeZone)
     {
-        if (!is_string($format)) {
-            throw new \InvalidArgumentException(
-                sprintf('Invalid date format supplied: %s', gettype($format))
-            );
-        }
-
-        $this->format = $format;
+        $this->format   = $format;
         $this->timeZone = $timeZone;
     }
 
@@ -52,28 +39,31 @@ final class DateStorage extends \SplObjectStorage implements DateStorageInterfac
      * Get the hash for the supplied date.
      *
      * @param DateTimeInterface $object
+     *
      * @return string
-     * @throws \DomainException when $object is not a date in the time zone
-     *   as specified in the constructor of the storage.
+     * @throws InvalidArgumentException When $object does not implement
+     *   DateTimeInterface.
+     * @throws IllegalDateTimeZoneException When $object is not a date in the
+     *   time zone as specified in the constructor of the storage.
      */
-    public function getHash($object)
+    public function getHash($object): string
     {
-        if (!($object instanceof DateTimeInterface)) {
-            throw new \InvalidArgumentException(
+        if (!$object instanceof DateTimeInterface) {
+            throw new InvalidArgumentException(
                 sprintf(
-                    'Invalid object supplied. Must be instance of %s',
+                    'Supplied argument "%s" does not implement "%s".',
+                    is_object($object)
+                        ? get_class($object)
+                        : gettext($object),
                     DateTimeInterface::class
                 )
             );
         }
-        
+
         if ($object->getTimezone()->getName() !== $this->timeZone->getName()) {
-            throw new \DomainException(
-                sprintf(
-                    'Date storage expects date in time zone %s, yet received %s',
-                    $this->timeZone->getName(),
-                    $object->getTimezone()->getName()
-                )
+            throw new IllegalDateTimeZoneException(
+                $this->timeZone,
+                $object->getTimezone()
             );
         }
 

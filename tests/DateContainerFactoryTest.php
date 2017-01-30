@@ -1,151 +1,90 @@
 <?php
-/**
- * HylianShield Date Storage.
- */
+namespace HylianShield\Date\Tests;
 
-namespace HylianShield\Test\Date;
-
-use DateTime;
-use DateTimeZone;
 use HylianShield\Date\DateContainerFactory;
 use HylianShield\Date\DateContainerInterface;
 
-class DateContainerFactoryTest extends \PHPUnit_Framework_TestCase
+/**
+ * @coversDefaultClass \HylianShield\Date\DateContainerFactory
+ */
+class DateContainerFactoryTest extends AbstractDateTimeTestCase
 {
     /**
-     * @return DateTimeZone[][]|null[][]
+     * @return DateContainerFactory
+     * @covers ::__construct
      */
-    public function constructorArgumentsProvider()
+    public function testConstructor(): DateContainerFactory
     {
-        $dateTimeZones = array_map(
-            function ($identifier) {
-                return [new DateTimeZone($identifier)];
-            },
-            DateTimeZone::listIdentifiers()
-        );
-
-        $dateTimeZones[] = [null];
-
-        return $dateTimeZones;
+        return new DateContainerFactory();
     }
 
     /**
-     * Test the constructor.
-     *
-     * @param DateTimeZone|null $dateTimeZone
-     * @dataProvider constructorArgumentsProvider
-     */
-    public function testConstructor(DateTimeZone $dateTimeZone = null)
-    {
-        $this->assertInstanceOf(
-            DateContainerFactory::class,
-            new DateContainerFactory($dateTimeZone)
-        );
-    }
-
-    /**
-     * Assert that the given container uses the given format.
-     *
-     * @param DateContainerInterface $container
-     * @param string $format
-     * @covers \HylianShield\Date\DateContainerFactory::createFromFormat
-     */
-    protected function assertDateContainerUsesFormat(
-        DateContainerInterface $container,
-        $format
-    ) {
-        $dateTime = new DateTime('1234-01-01 12:34:56');
-
-        $this->assertEquals(
-            $dateTime->format($format),
-            $container->getIdentifier($dateTime)
-        );
-    }
-
-    /**
-     * @return DateContainerFactory[][]
-     */
-    public function factoryProvider()
-    {
-        return [
-            [new DateContainerFactory()]
-        ];
-    }
-
-    /**
-     * Test the createFromFormat method.
+     * @depends testConstructor
      *
      * @param DateContainerFactory $factory
-     * @dataProvider factoryProvider
-     * @covers \HylianShield\Date\DateContainerFactory::createFromFormat
+     *
+     * @return DateContainerInterface
+     * @covers ::createFromFormat
      */
-    public function testCreateFromFormat(DateContainerFactory $factory)
-    {
-        $format = 'YYYY-MMMMM-DDDDDDD-HH-ii:ssss';
-
-        $this->assertDateContainerUsesFormat(
-            $factory->createFromFormat($format),
-            $format
-        );
+    public function testCreateFromFormat(
+        DateContainerFactory $factory
+    ): DateContainerInterface {
+        return $factory->createFromFormat(static::FORMAT);
     }
 
     /**
-     * Test the createIntervalSecond method.
+     * @depends testConstructor
      *
      * @param DateContainerFactory $factory
-     * @dataProvider factoryProvider
-     * @covers \HylianShield\Date\DateContainerFactory::createIntervalSecond
+     *
+     * @return DateContainerInterface
+     * @covers ::createIntervalSecond
      */
-    public function testCreateIntervalSecond(DateContainerFactory $factory)
-    {
-        $this->assertDateContainerUsesFormat(
-            $factory->createIntervalSecond(),
-            'Y-m-d H:i:s'
-        );
+    public function testCreateIntervalSecond(
+        DateContainerFactory $factory
+    ): DateContainerInterface {
+        return $factory->createIntervalSecond();
     }
 
     /**
-     * Test the createIntervalMinute method.
+     * @depends testConstructor
      *
      * @param DateContainerFactory $factory
-     * @dataProvider factoryProvider
-     * @covers \HylianShield\Date\DateContainerFactory::createIntervalMinute
+     *
+     * @return DateContainerInterface
+     * @covers ::createIntervalMinute
      */
-    public function testCreateIntervalMinute(DateContainerFactory $factory)
-    {
-        $this->assertDateContainerUsesFormat(
-            $factory->createIntervalMinute(),
-            'Y-m-d H:i'
-        );
+    public function testCreateIntervalMinute(
+        DateContainerFactory $factory
+    ): DateContainerInterface {
+        return $factory->createIntervalMinute();
     }
 
     /**
-     * Test the createIntervalHour method.
+     * @depends testConstructor
      *
      * @param DateContainerFactory $factory
-     * @dataProvider factoryProvider
-     * @covers \HylianShield\Date\DateContainerFactory::createIntervalHour
+     *
+     * @return DateContainerInterface
+     * @covers ::createIntervalHour
      */
-    public function testCreateIntervalHour(DateContainerFactory $factory)
-    {
-        $this->assertDateContainerUsesFormat(
-            $factory->createIntervalHour(),
-            'Y-m-d H'
-        );
+    public function testCreateIntervalHour(
+        DateContainerFactory $factory
+    ): DateContainerInterface {
+        return $factory->createIntervalHour();
     }
 
     /**
-     * Test the createIntervalDay method.
+     * @depends testConstructor
      *
      * @param DateContainerFactory $factory
-     * @dataProvider factoryProvider
-     * @covers \HylianShield\Date\DateContainerFactory::createIntervalDay
+     *
+     * @return DateContainerInterface
+     * @covers ::createIntervalDay
      */
-    public function testCreateIntervalDay(DateContainerFactory $factory)
-    {
-        $this->assertDateContainerUsesFormat(
-            $factory->createIntervalDay(),
-            'Y-m-d'
-        );
+    public function testCreateIntervalDay(
+        DateContainerFactory $factory
+    ): DateContainerInterface {
+        return $factory->createIntervalDay();
     }
 }

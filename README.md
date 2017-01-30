@@ -1,10 +1,14 @@
-# HylianShield Date
+# Introduction
 
 The business logic abstraction layer for your date sensitive application.
 
-[![Build Status](https://travis-ci.org/HylianShield/date.svg?branch=master)](https://travis-ci.org/HylianShield/date)
+## Installation
 
-## Date Container
+```shell
+composer require hylianshield/date:^1.0
+```
+
+## Usage
 
 The date container is an easy to understand container that can store data alongside full-fledged instances of `DateTimeInterface`.
 It uses instances of `DateTimeInterface` as keys and user supplied data as corresponding value.
@@ -16,6 +20,7 @@ It achieves this by internally using the date storage entity, which stores date 
 One may use the factory to create a new date container. This is the easiest approach with the least required configuration.
 
 ```php
+<?php
 $factory = new HylianShield\Date\DateContainerFactory();
 
 // Create a date container with a precision of whole days.
@@ -28,11 +33,12 @@ The date storage is what internally stores the dates and corresponding data into
 It needs both a date format and an instance of `DateTimeZone` to be properly configured.
 
 ```php
+<?php
 $storage = new HylianShield\Date\DateStorage(
     'Y-m-d',
     new DateTimeZone('Europe/Amsterdam')
 );
-$container = new DateContainer($storage);
+$container = new HylianShield\Date\DateContainer($storage);
 ```
 
 The supplied date format is used to uniquely identify date objects.
@@ -47,12 +53,15 @@ Normally, this would probably be populated by iterating over a data source.
 We use a reference date, right in the middle of our date period.
 
 ```php
+<?php
 $today = new DateTime('today');
 ```
 
 And we'll construct a date period with that.
 
 ```php
+<?php
+/** @var DateTime $today */
 $start = clone $today;
 $start->modify('-1 day');
 
@@ -68,6 +77,11 @@ $period = new DatePeriod($start, $interval, $end);
 Using that, we populate the container with dummy data.
 
 ```php
+<?php
+/**
+ * @var DatePeriod $period 
+ * @var \HylianShield\Date\DateContainerInterface $container
+ */
 foreach ($period as $date) {
     $container->attach($date, 'foo');
 }
@@ -76,18 +90,33 @@ foreach ($period as $date) {
 Now we can check if today is stored in the container:
 
 ```php
+<?php
+/**
+ * @var DateTimeInterface $today
+ * @var \HylianShield\Date\DateContainerInterface $container
+ */
 var_dump($container->contains($today)); // bool(true)
 ```
 
 We can explicitly get data for that date.
 
 ```php
+<?php
+/**
+ * @var DateTimeInterface $today
+ * @var \HylianShield\Date\DateContainerInterface $container
+ */
 var_dump($container->getData($today)); // string(3) "foo"
 ```
 
 Overriding the data remains a possibility.
 
 ```php
+<?php
+/**
+ * @var DateTimeInterface $today
+ * @var \HylianShield\Date\DateContainerInterface $container
+ */
 $container->attach($today, 'bar');
 var_dump($container->getData($today)); // string(3) "bar"
 ```
@@ -97,7 +126,8 @@ var_dump($container->getData($today)); // string(3) "bar"
 The real power of the container lies in the fact that you have full `DateTimeInterface` instances as the keys of your container.
 
 ```php
-/** @var \DateTimeInterface $date */
+<?php
+/** @var \HylianShield\Date\DateContainerInterface $container */
 foreach ($container as $date => $userData) {
     var_dump(
         $date->format('Y-m-d H:i:s'),
@@ -122,6 +152,8 @@ string(3) "foo"
 To easily export the data inside the container, it exposes a method to convert to a PHP array.
 
 ```php
+<?php
+/** @var \HylianShield\Date\DateContainerInterface $container */
 var_dump($container->toArray());
 ```
 
@@ -140,40 +172,16 @@ array(3) {
 
 The keys used here will correspond with the format as configured on the date storage.
 
-### Debugging date precision
-
-When supplying a custom date format, you may run into the scenario of supplying an illegal format.
-If that so happens, the dates may be all keyed to the same value.
-To quickly analyze what happens to the keys of dates when supplying a custom format, one can use the following methods.
-
-```php
-// Test against any given date instance.
-var_dump($container->getIdentifier($today)); // string(10) "2016-04-10"
-```
-
-```php
-// Test against all attached dates.
-var_dump($container->getIdentifiers());
-```
-
-Which outputs something like:
-
-```
-array(3) {
-  [0]=>
-  string(10) "2016-04-09"
-  [1]=>
-  string(10) "2016-04-10"
-  [2]=>
-  string(10) "2016-04-11"
-}
-```
-
 ### Detaching dates
 
 When detaching a date, the date and all corresponding data disappears:
 
 ```php
+<?php
+/**
+ * @var DateTimeInterface $today
+ * @var \HylianShield\Date\DateContainerInterface $container
+ */
 $container->detach($today);
 var_dump(
     $container->contains($today),
@@ -201,6 +209,8 @@ When mixing dates from different time zones, your business logic gets skewed.
 To prevent this, the date storage does not allow mixing of time zones.
 
 ```php
+<?php
+/** @var \HylianShield\Date\DateContainerInterface $container */
 $illegalDate = new DateTime('now', new DateTimeZone('UTC'));
 $container->attach($illegalDate, 'baz');
 ```
@@ -208,5 +218,5 @@ $container->attach($illegalDate, 'baz');
 Will render the following:
 
 ```
-PHP Fatal error:  Uncaught exception 'DomainException' with message 'Date storage expects date in time zone Europe/Amsterdam, yet received UTC'
+PHP Fatal error:  Uncaught exception 'HylianShield\Date\IllegalDateTimeZoneException' with message 'Date storage expects date in time zone Europe/Amsterdam, yet received UTC'
 ```
